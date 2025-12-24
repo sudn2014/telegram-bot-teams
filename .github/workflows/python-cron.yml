@@ -39,7 +39,7 @@ jobs:
       - name: Generate dummy CSV
         run: |
           python -c "from setup_bot_manual import save_to_csv; save_to_csv({'name':'Test','email':'test@example.com','phone':'123'})"
-      
+
       - name: Check for CSV
         run: |
           ls -l
