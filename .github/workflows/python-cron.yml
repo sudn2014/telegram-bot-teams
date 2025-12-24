@@ -2,11 +2,11 @@ name: Run Python Script on Schedule
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # every minute
-  workflow_dispatch:        # allows manual trigger from Actions tab
+    - cron: "*/30 * * * *"   # every 30 minutes
+  workflow_dispatch:
 
 permissions:
-  contents: write           # allow pushing back to repo
+  contents: write
 
 jobs:
   run-script:
@@ -24,9 +24,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run script
+      - name: Run script (CI mode)
         run: python setup_bot_manual.py
-        env: 
+        env:
           CI: true
 
       - name: Commit CSV results
@@ -37,13 +37,3 @@ jobs:
           git add pending_teams.csv || echo "No CSV to add"
           git commit -m "Update pending_teams.csv" || echo "No changes to commit"
           git push origin main
-
-      - name: Generate dummy CSV
-        run: |
-          python -c "from setup_bot_manual import save_to_csv; save_to_csv({'name':'Test','email':'test@example.com','phone':'123'})"
-
-      - name: Check for CSV
-        run: |
-          ls -l
-          find . -name "pending_teams.csv"
-
