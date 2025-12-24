@@ -34,6 +34,8 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout main
+          git pull origin main --rebase
           git add pending_teams.csv || echo "No CSV to add"
           git commit -m "Update pending_teams.csv" || echo "No changes to commit"
           git push origin main
+
