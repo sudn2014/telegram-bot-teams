@@ -95,6 +95,13 @@ def save_to_csv(user_data: Dict[str, str]):
             'Timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
     print("Saved to pending_teams.csv")
+    
+def generate_dummy_csv():
+    save_to_csv({
+        'name': 'Test User',
+        'email': 'test@example.com',
+        'phone': '1234567890'
+    })
 
 def run_bot(config: Dict[str, Any]):
     print("\n=== Starting Bot ===")
@@ -169,15 +176,34 @@ def run_bot(config: Dict[str, Any]):
     bot.delete_webhook()
     bot.polling(none_stop=True)
 
+
 if __name__ == "__main__":
     try:
         config = load_config()
         setup_telegram(config)
-        run_bot(config)
+
+        # If running in CI (GitHub Actions), generate dummy CSV instead of starting the bot
+        if os.environ.get("CI") == "true":
+            generate_dummy_csv()
+        else:
+            run_bot(config)
+
     except KeyboardInterrupt:
         print("\nStopped.")
     except Exception as e:
         print(f"Error: {e}")
         print("Run again or check prerequisites.")
+
+# if __name__ == "__main__":
+#     try:
+#         config = load_config()
+#         setup_telegram(config)
+#         run_bot(config)
+#     except KeyboardInterrupt:
+#         print("\nStopped.")
+#     except Exception as e:
+#         print(f"Error: {e}")
+#         print("Run again or check prerequisites.")
+
 
 
