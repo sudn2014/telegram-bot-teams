@@ -2,12 +2,12 @@ name: Run Python Script on Schedule
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # every 30 minutes
-  workflow_dispatch:          # allows manual trigger from Actions tab
+    - cron: "*/1 * * * *"   # every minute
+  workflow_dispatch:        # allows manual trigger from Actions tab
 
-  permissions:
-  contents: write
-  
+permissions:
+  contents: write           # allow pushing back to repo
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
@@ -22,20 +22,15 @@ jobs:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run script
         run: python setup_bot_manual.py
 
-        - name: Commit CSV results
-  
       - name: Commit CSV results
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add pending_teams.csv
-          git commit -m "Update pending_teams.csv"
+          git commit -m "Update pending_teams.csv" || echo "No changes to commit"
           git push
-
-
