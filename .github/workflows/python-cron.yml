@@ -34,3 +34,7 @@ jobs:
     git commit -m "Update pending_teams.csv"
     git push
 
+
+  permissions:
+  contents: write
+
