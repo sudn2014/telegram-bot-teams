@@ -179,5 +179,5 @@ if __name__ == "__main__":
         print("\nStopped.")
     except Exception as e:
         print(f"Error: {e}")
->>>>>>> 52ea95b (Add scheduled workflow for Python script)
         print("Run again or check prerequisites.")
+
