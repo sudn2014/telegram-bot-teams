@@ -10,9 +10,6 @@ import csv
 from datetime import datetime
 import re
 
-if state == 'email' and not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', message.text):
-    bot.send_message(user_id, "Invalid email. Please try again:")
-    return  # Stay in state
 
 # Config file
 CONFIG_FILE = 'config.json'
@@ -171,7 +168,10 @@ def run_bot(config: Dict[str, Any]):
             bot.send_message(user_id, "Thanks! Now your email:")
             user_states[user_id]['state'] = 'email'
         elif state == 'email':
-            data['email'] = message.text
+            if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', message.text.strip()):
+                bot.send_message(user_id, "That doesn't look like a valid email (e.g., user@example.com). Please try again:")
+                return  # Stay in 'email' state
+            data['email'] = message.text.strip()
             print(f"# NEW: Set email to '{data['email']}' for {user_id}")  # NEW
             bot.send_message(user_id, "Last: your phone number:")
             user_states[user_id]['state'] = 'phone'
@@ -208,6 +208,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         print("Run again or check prerequisites.")
+
 
 
 
