@@ -14,10 +14,17 @@ import re
 CONFIG_FILE = 'config.json'
 
 def load_config() -> Dict[str, Any]:
+    config = {}
     if os.path.exists(CONFIG_FILE):
         with open(CONFIG_FILE, 'r') as f:
-            return json.load(f)
-    return {}
+            config.update(json.load(f))
+    # Override/add from env vars (secure)
+    config['bot_token'] = os.environ.get('BOT_TOKEN', config.get('bot_token'))
+    config['group_chat_id'] = os.environ.get('GROUP_CHAT_ID', config.get('group_chat_id'))
+    config['email_to'] = os.environ.get('EMAIL_TO', config.get('email_to'))
+    config['email_from'] = os.environ.get('EMAIL_FROM', config.get('email_from'))
+    config['email_password'] = os.environ.get('EMAIL_PASSWORD', config.get('email_password'))
+    return config
 
 def save_config(config: Dict[str, Any]):
     with open(CONFIG_FILE, 'w') as f:
@@ -208,6 +215,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         print("Run again or check prerequisites.")
+
 
 
 
