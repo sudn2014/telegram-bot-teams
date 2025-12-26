@@ -2,7 +2,7 @@ name: Run Python Script on Schedule
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # every 5 minutes
+    - cron: "*/30 * * * *"   # every 5 minutes
   workflow_dispatch:
 
 permissions:
