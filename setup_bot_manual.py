@@ -167,6 +167,7 @@ def run_bot(config: Dict[str, Any]):
             bot.send_message(user_id, "Thanks! Now your email:")
             user_states[user_id]['state'] = 'email'
         elif state == 'email':
+            email_input = message.text.strip()
             if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', message.text.strip()):
                 bot.send_message(user_id, "That doesn't look like a valid email (e.g., user@example.com). Please try again:")
                 return  # Stay in 'email' state
@@ -207,6 +208,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {e}")
         print("Run again or check prerequisites.")
+
 
 
 
