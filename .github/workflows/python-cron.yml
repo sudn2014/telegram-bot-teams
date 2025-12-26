@@ -28,6 +28,14 @@ jobs:
         run: python setup_bot_manual.py
         env:
           CI: true
+          
+      - name: Check Syntax
+        run: python -m py_compile setup_bot_manual.py
+        
+      - name: Run Bot (CI Mode)
+        run: python setup_bot_manual.py
+        env:
+          CI: true
 
       - name: Commit CSV results
         run: |
