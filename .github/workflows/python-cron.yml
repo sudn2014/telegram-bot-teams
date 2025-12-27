@@ -1,7 +1,7 @@
 name: Run Python Script on Schedule
 on:
   schedule:
-    - cron: "*/1 * * * *"  # Every 1 minute (GitHub quota: ~2000 min/month free; monitor usage)
+    - cron: "*/5 * * * *"  # Every 1 minute (GitHub quota: ~2000 min/month free; monitor usage)
   workflow_dispatch:  # Manual trigger from Actions tab
 
 permissions:
