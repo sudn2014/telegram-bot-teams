@@ -1,19 +1,20 @@
-name: Run Python Script on Schedule
+name: Run Telegram Bot (Full Mode)
 on:
   schedule:
-    - cron: "*/5 * * * *"  # Every 5 minutes (safer for free quota; change to */1 if paid)
+    - cron: "*/5 * * * *"  # Every 5 min (free-tier safe; change to */1 if paid & willing to pay)
   workflow_dispatch:  # Manual trigger from Actions tab
 
 permissions:
   contents: write
-  pull-requests: write  # Optional: For auto-PRs if needed
+  pull-requests: write
 
 jobs:
-  run-script:
+  run-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 360  # Max 6 hours; adjust down for testing
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4  # Checks out main; no need for extra fetch/checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -23,25 +24,26 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Check Syntax
-        run: python -m py_compile setup_bot_manual.py
-
-      - name: Run script (CI mode)
+      - name: Run full bot
         run: python setup_bot_manual.py
         env:
-          CI: true
+          # No CI=true—full polling mode
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
-          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}  # For script-level pushes (optional)
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
 
-      - name: Commit and push CSV results
+      - name: Commit any CSV changes (post-run)
+        if: always()  # Runs even on timeout
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # No need for fetch/checkout/pull—v4 already on main
-          git add pending_teams.csv || echo "No CSV to add"
-          git commit -m "Update pending_teams.csv with new entry" || echo "No changes to commit"
-          git push origin main || echo "Push failed - check permissions"
+          git add pending_teams.csv
+          if git diff --staged --quiet; then
+            echo "No CSV changes"
+          else
+            git commit -m "Update pending_teams.csv from bot run"
+            git push origin main
+          fi
