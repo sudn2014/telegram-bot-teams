@@ -27,7 +27,7 @@ jobs:
       - name: Run full bot (polling mode)
         run: python setup_bot_manual.py
         env:
-          # No CI=true—enables run_bot + polling
+          CI: false  # Override GitHub's default CI=true to enable full polling
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
