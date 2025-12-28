@@ -1,7 +1,7 @@
 name: Run Telegram Bot (Full Mode)
 on:
   schedule:
-    - cron: "*/5 * * * *"  # Every 5 min (quota-safe; edit to */1 if paid)
+    - cron: "*/10 * * * *"  # Every 5 min (quota-safe; edit to */1 if paid)
   workflow_dispatch:  # Manual trigger
 
 permissions:
