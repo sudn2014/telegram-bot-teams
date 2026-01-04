@@ -255,8 +255,11 @@ def run_bot(config: Dict[str, Any]):
 
 if __name__ == "__main__":
     try:
+        print("Starting main block...")  # Debug #1
         config = load_config()
+        print(f"Config loaded: bot_token={bool(config.get('bot_token'))}, group_id={bool(config.get('group_chat_id'))}")  # Debug (masked) #1
         setup_telegram(config)
+        print("Setup complete—checking RUN_DUMMY...")  # Debug #1
         print(f"RUN_DUMMY env: '{os.environ.get('RUN_DUMMY')}'")  # Debug
         if os.environ.get("RUN_DUMMY") == "true":
             print("Dummy mode")
@@ -268,4 +271,8 @@ if __name__ == "__main__":
         print("\nStopped.")
     except Exception as e:
         print(f"Error: {e}")
+        import traceback #1
+        traceback.print_exc()  # Full stack trace #1
         print("Check env vars (BOT_TOKEN, etc.) or run locally for setup.")
+
+        #1 : added to debug to resolve the csv update issue 
