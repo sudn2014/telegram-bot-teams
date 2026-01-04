@@ -12,6 +12,9 @@ from datetime import datetime
 import re
 import random
 
+print("All imports successful")  # Debug: First print
+sys.stdout.flush()  # Force output
+
 # Config file (local only; prod uses env vars)
 CONFIG_FILE = 'config.json'
 
@@ -33,9 +36,11 @@ def save_config(config: Dict[str, Any]):
         json.dump(config, f, indent=4)
 
 def setup_telegram(config: Dict[str, Any]):
+    print("Entering setup_telegram")  # Debug
+    sys.stdout.flush()
     print("\n=== Telegram Setup ===")
-    interactive = sys.stdin.isatty()  # NEW: Detect local terminal vs. hosting
-    
+    interactive = sys.stdin.isatty() # NEW: Detect local terminal vs. hosting
+   
     required = ['bot_token', 'group_chat_id']
     for key in required:
         if not config.get(key):
@@ -54,7 +59,7 @@ def setup_telegram(config: Dict[str, Any]):
                 print(f"{key} saved.")
             else:
                 raise ValueError(f"Missing required config '{key}'. Set {key.upper()} env var in hosting!")
-    
+        print(f"Checked {key}: {'OK' if config.get(key) else 'MISSING'}")  # Debug: Add this line here
     # Email setup (prompt only if interactive)
     email_keys = ['email_to', 'email_from', 'email_password']
     for key in email_keys:
@@ -68,8 +73,7 @@ def setup_telegram(config: Dict[str, Any]):
             save_config(config)
     if not interactive and not all(config.get(k) for k in email_keys):
         print("Warning: Email config incomplete—emails may fail. Set EMAIL_* env vars.")
-
-    print(f"CI env: '{os.environ.get('CI')}'")  # Should be None
+    print(f"CI env: '{os.environ.get('CI')}'") # Should be None
     if os.environ.get("CI") == "true":
         print("Dummy mode")
         generate_dummy_csv()
@@ -254,10 +258,12 @@ def run_bot(config: Dict[str, Any]):
     bot.polling(none_stop=True)
 
 if __name__ == "__main__":
+    print("Entering main block")  # Debug
+    sys.stdout.flush()
     try:
-        print("Starting main block...")  # Debug #1
         config = load_config()
-        print(f"Config loaded: bot_token={bool(config.get('bot_token'))}, group_id={bool(config.get('group_chat_id'))}")  # Debug (masked) #1
+        print("load_config complete")  # Debug
+        sys.stdout.flush()
         setup_telegram(config)
         print("Setup complete—checking RUN_DUMMY...")  # Debug #1
         print(f"RUN_DUMMY env: '{os.environ.get('RUN_DUMMY')}'")  # Debug
