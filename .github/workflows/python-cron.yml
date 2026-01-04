@@ -1,37 +1,31 @@
-name: Run Telegram Bot (Full Mode)
+name: Telegram Bot & Daily Processing
 on:
   schedule:
-    - cron: "*/10 * * * *"  # Every 5 min (quota-safe; edit to */1 if paid)
+    - cron: "*/5 * * * *"  # Every 5 min for bot polling (adjust for quota)
+    - cron: "0 0 * * *"  # Daily at midnight UTC for CSV processing
   workflow_dispatch:  # Manual trigger
 
 permissions:
   contents: write
   pull-requests: write
 
-concurrency:
-  group: bot-polling
-  cancel-in-progress: true  # Cancels old runs on new
-
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 360  # 6h max for polling
+    timeout-minutes: 360
+    concurrency:
+      group: bot-polling
+      cancel-in-progress: true
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
+      - run: pip install -r requirements.txt
       - name: Run full bot (polling mode)
         run: python setup_bot_manual.py
         env:
-          CI: false  # Override GitHub's default CI=true to enable full polling
+          CI: false
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
@@ -51,3 +45,21 @@ jobs:
             git commit -m "Update pending_teams.csv from bot submissions"
             git push origin main || echo "Push failed"
           fi
+
+  process-csv-daily:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 0 * * *'  # Only daily cron
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: pip install -r requirements.txt
+      - name: Extract and add emails to Teams
+        run: python daily_processor.py  # New script below
+        env:
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          TEAMS_COMMUNITY_ID: ${{ secrets.TEAMS_COMMUNITY_ID }}
