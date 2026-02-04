@@ -1,76 +1,104 @@
+# daily_teams_inviter.py
 import csv
 import requests
-import base64
 import json
-from datetime import datetime, timedelta
-from msal import ConfidentialClientApplication
+import base64
 import os
+from datetime import datetime
+from msal import ConfidentialClientApplication
 
-# Env vars
-git_token = os.environ['GIT_TOKEN']
-client_id = os.environ['AZURE_CLIENT_ID']
-client_secret = os.environ['AZURE_CLIENT_SECRET']
-tenant_id = os.environ['AZURE_TENANT_ID']
-community_id = os.environ['TEAMS_COMMUNITY_ID']
+# Environment variables from GitHub Secrets
+client_id = os.environ["AZURE_CLIENT_ID"]
+client_secret = os.environ["AZURE_CLIENT_SECRET"]
+tenant_id = os.environ["AZURE_TENANT_ID"]
+community_id = os.environ["TEAMS_COMMUNITY_ID"]
 
-# Fetch CSV from GitHub
-headers = {'Authorization': f'token {git_token}'}
-response = requests.get('https://api.github.com/repos/sudn2014/telegram-bot-teams/contents/pending_teams.csv', headers=headers)
-if response.status_code != 200:
-    print(f"Failed to fetch CSV: {response.status_code}")
+# Step 1: Fetch CSV from GitHub (using GIT_TOKEN for auth)
+git_token = os.environ.get("GIT_TOKEN")
+if not git_token:
+    print("GIT_TOKEN not set — cannot fetch CSV")
     exit(1)
 
-content_b64 = response.json()['content']
-content = base64.b64decode(content_b64).decode('utf-8')
-rows = list(csv.DictReader(content.splitlines()))
+headers = {"Authorization": f"token {git_token}"}
+response = requests.get(
+    "https://api.github.com/repos/sudn2014/telegram-bot-teams/contents/pending_teams.csv",
+    headers=headers
+)
 
-# Extract today's unique emails (Timestamp >= today 00:00, no duplicates)
+if response.status_code != 200:
+    print(f"Failed to fetch CSV: {response.status_code} - {response.text}")
+    exit(1)
+
+content_b64 = response.json()["content"]
+csv_content = base64.b64decode(content_b64).decode("utf-8")
+
+# Step 2: Parse CSV and extract today's unique emails
+rows = list(csv.DictReader(csv_content.splitlines()))
 today = datetime.now().date()
-new_emails = []
+emails_today = set()
+
 for row in rows:
-    if 'Timestamp' not in row:
+    if "Timestamp" not in row or "Email" not in row:
         continue
-    row_date = datetime.strptime(row['Timestamp'], '%Y-%m-%d %H:%M:%S').date()
-    email = row['Email'].strip().lower()
-    if row_date == today and email and email not in [e['email'] for e in new_emails]:
-        new_emails.append({'email': email, 'name': row['Name']})
+    try:
+        row_date = datetime.strptime(row["Timestamp"], "%Y-%m-%d %H:%M:%S").date()
+        email = row["Email"].strip().lower()
+        if row_date == today and email:
+            emails_today.add(email)
+    except ValueError:
+        continue  # Skip invalid timestamps
 
-print(f"Found {len(new_emails)} new unique emails for today: {new_emails}")
+print(f"Found {len(emails_today)} unique emails submitted today")
 
-if not new_emails:
-    print("No new emails—skipping")
+if not emails_today:
+    print("No new emails today — exiting")
     exit(0)
 
-# Auth for Microsoft Graph
+# Step 3: Authenticate to Microsoft Graph
 scopes = ["https://graph.microsoft.com/.default"]
+authority = f"https://login.microsoftonline.com/{tenant_id}"
+
 app = ConfidentialClientApplication(
-    client_id, authority=f"https://login.microsoftonline.com/{tenant_id}",
-    client_credential=client_secret
+    client_id=client_id,
+    client_credential=client_secret,
+    authority=authority
 )
-result = app.acquire_token_silent(scopes, account=None)
-if not result:
-    result = app.acquire_token_for_client(scopes)
-if 'access_token' not in result:
-    print(f"Auth failed: {result}")
+
+token_result = app.acquire_token_for_client(scopes=scopes)
+
+if "access_token" not in token_result:
+    print("Authentication failed:")
+    print(token_result.get("error"))
+    print(token_result.get("error_description"))
     exit(1)
-token = result['access_token']
 
-# Add to Teams community (invite as members)
-headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
-added_count = 0
-for user in new_emails:
-    body = {
-        'members': [{
-            'email': user['email'],
-            'displayName': user['name'],
-            'roles': ['member']
-        }]
+access_token = token_result["access_token"]
+
+# Step 4: Invite each email to the Teams community
+headers = {
+    "Authorization": f"Bearer {access_token}",
+    "Content-Type": "application/json"
+}
+
+added = 0
+for email in emails_today:
+    payload = {
+        "members": [
+            {
+                "@odata.type": "#microsoft.graph.aadUserConversationMember",
+                "email": email,
+                "roles": ["member"]
+            }
+        ]
     }
-    response = requests.post(f"https://graph.microsoft.com/v1.0/groups/{community_id}/members/$ref", headers=headers, json=body)
-    if response.status_code in [200, 201, 204]:
-        print(f"Added {user['name']} ({user['email']}) to Teams community")
-        added_count += 1
-    else:
-        print(f"Failed to add {user['email']}: {response.status_code} - {response.text}")
 
-print(f"Daily processing complete: {added_count}/{len(new_emails)} added")
+    url = f"https://graph.microsoft.com/v1.0/teams/{community_id}/members"
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code in (200, 201, 204):
+        print(f"Successfully invited {email}")
+        added += 1
+    else:
+        print(f"Failed to invite {email}: {response.status_code} - {response.text}")
+
+print(f"Daily invite complete: {added}/{len(emails_today)} users added")
