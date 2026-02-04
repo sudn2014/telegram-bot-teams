@@ -56,7 +56,7 @@ jobs:
           python-version: "3.10"
       - run: pip install -r requirements.txt
       - name: Extract today's emails and add to Teams
-        run: python daily_processor.py
+        run: python daily_teams_inviter.py
         env:
           GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
