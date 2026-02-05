@@ -48,7 +48,7 @@ jobs:
 
   process-csv-daily:
     runs-on: ubuntu-latest
-    if: github.event.schedule == '0 0 * * *'  # Only daily cron
+    # if: github.event.schedule == '0 0 * * *'  # Only daily cron
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
