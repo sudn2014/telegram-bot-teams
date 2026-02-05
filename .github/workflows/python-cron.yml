@@ -1,7 +1,7 @@
 name: Telegram Bot & Daily Processing
 on:
   schedule:
-    - cron: "*/2 * * * *"  # Bot polling every 5 min
+    - cron: "*/5 * * * *"  # Bot polling every 5 min
     - cron: "0 0 * * *"  # Daily at midnight UTC for Teams adds
   workflow_dispatch:
 
