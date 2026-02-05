@@ -101,7 +101,7 @@ Thanks for joining our Telegram group and providing your details. We've received
 - Email: {user_data['email']}
 - Phone: {user_data['phone']}
 
-We'll add you to our Microsoft Teams community shortly (usually within 24 hours).
+Join our Teams community here: https://teams.live.com/l/community/FEAz7PhpWTe1hYm1gQ
 If you have questions, reply to this email or DM the bot.
 
 Best,
@@ -206,7 +206,7 @@ def run_bot(config: Dict[str, Any]):
         user_id = message.from_user.id
         print(f"# /start from {user_id}")
         if user_id not in user_states:
-            bot.reply_to(message, "Welcome! Reply with your full name to request Teams access.")
+            bot.reply_to(message, "Welcome! Reply with your full name please.")
             user_states[user_id] = {'state': 'name', 'data': {}}
             print(f"# Set state to 'name' for {user_id}")
 
@@ -260,7 +260,7 @@ def run_bot(config: Dict[str, Any]):
             print("send_email and save_to_csv done")  # Debug: Add this line
             sys.stdout.flush()  # Force output
             try:
-                bot.send_message(user_id, f"Thanks! We've noted your details ({data['name']}, {data['email']}, {data['phone']}). You'll be added to Teams soon—check your email for confirmation.")
+                bot.send_message(user_id, f"Thanks! We've noted your details ({data['name']}, {data['email']}, {data['phone']}). check your email for confirmation.")
                 print(f"# Final msg sent to {user_id}")
             except Exception as e:
                 print(f"# Final msg failed for {user_id}: {e}")
@@ -295,3 +295,4 @@ if __name__ == "__main__":
         print("Check env vars (BOT_TOKEN, etc.) or run locally for setup.")
 
         #1 : added to debug to resolve the csv update issue 
+
