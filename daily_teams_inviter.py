@@ -4,7 +4,7 @@ import requests
 import json
 import base64
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from msal import ConfidentialClientApplication
 
 # Environment variables from GitHub Secrets
@@ -24,7 +24,6 @@ response = requests.get(
     "https://api.github.com/repos/sudn2014/telegram-bot-teams/contents/pending_teams.csv",
     headers=headers
 )
-
 if response.status_code != 200:
     print(f"Failed to fetch CSV: {response.status_code} - {response.text}")
     exit(1)
@@ -32,26 +31,30 @@ if response.status_code != 200:
 content_b64 = response.json()["content"]
 csv_content = base64.b64decode(content_b64).decode("utf-8")
 
-# Step 2: Parse CSV and extract today's unique emails
-rows = list(csv.DictReader(csv_content.splitlines()))
-today = datetime.now().date()
-emails_today = set()
+# Step 2: Parse CSV and extract emails from the last 24 hours (unique)
+rows = list(csv.DictReader(csv_content.splitlines()))  # ← FIXED: Uncommented this line
+now = datetime.now(timezone.utc)
+last_24h = now - timedelta(hours=24)
+emails_last_24h = set()  # ← Your new variable
 
-for row in rows:
+for row in rows:  # ← Uses 'rows' correctly
     if "Timestamp" not in row or "Email" not in row:
         continue
     try:
-        row_date = datetime.strptime(row["Timestamp"], "%Y-%m-%d %H:%M:%S").date()
-        email = row["Email"].strip().lower()
-        if row_date == today and email:
-            emails_today.add(email)
+        # Parse timestamp (assume UTC)
+        row_time = datetime.strptime(row["Timestamp"], "%Y-%m-%d %H:%M:%S")
+        row_time = row_time.replace(tzinfo=timezone.utc)  # make aware
+        if row_time >= last_24h:
+            email = row["Email"].strip().lower()
+            if email:
+                emails_last_24h.add(email)
     except ValueError:
-        continue  # Skip invalid timestamps
+        continue  # invalid timestamp
 
-print(f"Found {len(emails_today)} unique emails submitted today")
+print(f"Found {len(emails_last_24h)} unique emails in the last 24 hours")
 
-if not emails_today:
-    print("No new emails today — exiting")
+if not emails_last_24h:
+    print("No new emails in the last 24 hours — exiting")
     exit(0)
 
 # Step 3: Authenticate to Microsoft Graph
@@ -81,7 +84,7 @@ headers = {
 }
 
 added = 0
-for email in emails_today:
+for email in emails_last_24h:  # ← FIXED: Changed to emails_last_24h
     payload = {
         "members": [
             {
@@ -101,4 +104,4 @@ for email in emails_today:
     else:
         print(f"Failed to invite {email}: {response.status_code} - {response.text}")
 
-print(f"Daily invite complete: {added}/{len(emails_today)} users added")
+print(f"Daily invite complete: {added}/{len(emails_last_24h)} users added")
