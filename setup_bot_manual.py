@@ -80,16 +80,6 @@ def setup_telegram(config: Dict[str, Any]):
     if not interactive and not all(config.get(k) for k in email_keys):
         print("Warning: Email config incomplete—emails may fail. Set EMAIL_* env vars.")
     print(f"CI env: '{os.environ.get('CI')}'") # Should be None
-    # if os.environ.get("CI") == "true":
-    #     print("Dummy mode")
-    #     generate_dummy_csv()
-    # Remove the else: run_bot(config) block entirely
-    # if os.environ.get("CI") == "true":
-    #     print("Dummy mode")
-    #     generate_dummy_csv()
-    # else:
-    #     print("Full mode - starting polling")
-    #     run_bot(config)
 
 def send_email(config: Dict[str, Any], user_data: Dict[str, str]):
     try:
