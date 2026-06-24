@@ -83,9 +83,13 @@ def setup_telegram(config: Dict[str, Any]):
     if os.environ.get("CI") == "true":
         print("Dummy mode")
         generate_dummy_csv()
-    else:
-        print("Full mode - starting polling")
-        run_bot(config)
+    # Remove the else: run_bot(config) block entirely
+    # if os.environ.get("CI") == "true":
+    #     print("Dummy mode")
+    #     generate_dummy_csv()
+    # else:
+    #     print("Full mode - starting polling")
+    #     run_bot(config)
 
 def send_email(config: Dict[str, Any], user_data: Dict[str, str]):
     try:
