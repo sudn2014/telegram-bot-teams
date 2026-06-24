@@ -275,28 +275,11 @@ def run_bot(config: Dict[str, Any]):
     bot.polling(none_stop=True)
 
 if __name__ == "__main__":
-    print("Entering main block")  # Debug
-    sys.stdout.flush()
-    try:
-        config = load_config()
-        print("load_config complete")  # Debug
-        sys.stdout.flush()
-        setup_telegram(config)
-        print("Setup complete—checking RUN_DUMMY...")  # Debug #1
-        print(f"RUN_DUMMY env: '{os.environ.get('RUN_DUMMY')}'")  # Debug
-        if os.environ.get("RUN_DUMMY") == "true":
-            print("Dummy mode")
-            generate_dummy_csv()
-        else:
-            print("Full mode - starting polling")
-            run_bot(config)
-    except KeyboardInterrupt:
-        print("\nStopped.")
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback #1
-        traceback.print_exc()  # Full stack trace #1
-        print("Check env vars (BOT_TOKEN, etc.) or run locally for setup.")
-
-        #1 : added to debug to resolve the csv update issue 
+    config = load_config()
+    setup_telegram(config)  # only does config now, no bot start
+    
+    if os.environ.get("CI") == "true":
+        generate_dummy_csv()
+    else:
+        run_bot(config)
 
