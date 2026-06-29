@@ -79,7 +79,6 @@ def setup_telegram(config: Dict[str, Any]):
             save_config(config)
     if not interactive and not all(config.get(k) for k in email_keys):
         print("Warning: Email config incomplete—emails may fail. Set EMAIL_* env vars.")
-    print(f"CI env: '{os.environ.get('CI')}'") # Should be None
 
 def send_email(config: Dict[str, Any], user_data: Dict[str, str]):
     try:
