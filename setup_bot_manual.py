@@ -180,9 +180,17 @@ def generate_dummy_csv():
 
 def run_bot(config: Dict[str, Any]):
     print("\n=== Starting Bot ===")
+    import signal
     bot = telebot.TeleBot(config['bot_token'])
     group_chat_id = config['group_chat_id']
     user_states = {}
+
+    # Stop polling after 540 seconds (9 minutes)
+    def stop_bot(signum, frame):
+        print("Time limit reached - stopping bot cleanly")
+        bot.stop_polling()
+    
+    signal.signal(signal.SIGTERM, stop_bot)
 
     @bot.message_handler(content_types=['new_chat_members'])
     def new_member_handler(message):
@@ -216,53 +224,37 @@ def run_bot(config: Dict[str, Any]):
         
         state = user_states[user_id]['state']
         data = user_states[user_id]['data']
-        print(f"# State for {user_id}: '{state}'")
         
         input_text = message.text.strip()
-        print(f"Handler entered for state '{state}' with input '{input_text}'")  # Debug
-        sys.stdout.flush()
 
-        if not input_text:  # NEW: Skip empty messages
+        if not input_text:
             return
         
         if state == 'name':
-            if not input_text:  # NEW: Basic validation
-                bot.send_message(user_id, "Name can't be empty. Please try again.")
-                return
             data['name'] = input_text
-            print(f"# Name: '{data['name']}' for {user_id}")
             bot.send_message(user_id, "Thanks! Now your email:")
             user_states[user_id]['state'] = 'email'
         elif state == 'email':
-            if not re.match(r'^[\w.-]+@[\w.-]+\.\w+$', input_text):  # FIXED: Removed \ before . in classes
+            if not re.match(r'^[\w.-]+@[\w.-]+\.\w+$', input_text):
                 bot.send_message(user_id, "That doesn't look like a valid email (e.g., user@example.com). Please try again:")
-                return  # Stay in 'email' state
+                return
             data['email'] = input_text
-            print(f"# Email: '{data['email']}' for {user_id}")
             bot.send_message(user_id, "Last: your phone number:")
             user_states[user_id]['state'] = 'phone'
         elif state == 'phone':
-            if not input_text:  # NEW: Basic validation
-                bot.send_message(user_id, "Phone can't be empty. Please try again.")
-                return
             data['phone'] = input_text
-            print(f"# Phone: '{data['phone']}' for {user_id}")
-            print("Phone state complete—calling send_email and save_to_csv")  # Debug: Add this line
-            sys.stdout.flush()  # Force output
             send_email(config, data)
             save_to_csv(data)
-            print("send_email and save_to_csv done")  # Debug: Add this line
-            sys.stdout.flush()  # Force output
             try:
-                bot.send_message(user_id, f"Thanks! We've noted your details ({data['name']}, {data['email']}, {data['phone']}). check your email for confirmation.")
-                print(f"# Final msg sent to {user_id}")
+                bot.send_message(user_id, f"Thanks! We've noted your details ({data['name']}, {data['email']}, {data['phone']}). Check your email for confirmation.")
             except Exception as e:
                 print(f"# Final msg failed for {user_id}: {e}")
             del user_states[user_id]
     
     print("Bot running... Press Ctrl+C to stop.")
     bot.delete_webhook()
-    bot.polling(none_stop=True)
+    bot.polling(none_stop=True, timeout=540)
+
 
 if __name__ == "__main__":
     config = load_config()
