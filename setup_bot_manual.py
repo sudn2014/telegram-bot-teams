@@ -257,10 +257,6 @@ def run_bot(config: Dict[str, Any]):
 
 if __name__ == "__main__":
     config = load_config()
-    setup_telegram(config)  # only does config now, no bot start
-    
-    if os.environ.get("CI") == "true":
-        generate_dummy_csv()
-    else:
-        run_bot(config)
+    setup_telegram(config)
+    run_bot(config)
 
